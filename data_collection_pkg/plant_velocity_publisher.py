@@ -6,10 +6,10 @@ import os
 import yaml
 
 
-class PlantPositionPublisher(Node):
+class PlantVelocityPublisher(Node):
 
     def __init__(self):
-        super().__init__('plant_position_publisher')
+        super().__init__('plant_velocity_publisher')
         self.publisher_ = self.create_publisher(Float32MultiArray, 'topic', 10)
         package_share_directory = os.path.join(
             os.getenv('AMENT_PREFIX_PATH').split(':')[0], 'share/data_collection_pkg/config')
@@ -20,26 +20,24 @@ class PlantPositionPublisher(Node):
 
         # Extract constants
         constants = config['constants']
-        self._FRAME_HEIGHT = constants['FRAME_HEIGHT']
-        self._FRAME_WIDTH = constants['FRAME_WIDTH']
-        timer_period = constants['TIMER_PERIOD']['POSITION_TIMEOUT']
+        self._SPEED = constants['SPEED']
+        self._ROTATION_ANGLE = constants['ROTATION_ANGLE']
+        timer_period = constants['TIMER_PERIOD']['VELOCITY_TIMEOUT']
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
     def timer_callback(self):
         msg = Float32MultiArray()
-        y = round(random.uniform(0, self._FRAME_HEIGHT), 1)
-        msg.data = [0.0, y]
-        if random.choice([0, 1]) > 0.7:
-            self.publisher_.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % msg.data)
-            self.i += 1
+        msg.data = [self._SPEED, self._ROTATION_ANGLE]
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.i += 1
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    minimal_publisher = PlantPositionPublisher()
+    minimal_publisher = PlantVelocityPublisher()
     rclpy.spin(minimal_publisher)
 
     # Destroy the node explicitly
