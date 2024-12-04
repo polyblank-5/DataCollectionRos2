@@ -1,0 +1,16 @@
+launch:
+
+  - node:
+    pkg: "data_collection_pkg"
+    exec: "plant_position_publisher"
+    name: "plant_position_publisher"
+
+  - node:
+    pkg: "data_collection_pkg"
+    exec: "plant_velocity_publisher"
+    name: "plant_velocity_publisher"
+
+  - node:
+    pkg: "data_collection_pkg"
+    exec: "plant_data_subscriber"
+    name: "plant_data_subscriber"
