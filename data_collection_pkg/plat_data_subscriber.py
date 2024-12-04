@@ -1,7 +1,3 @@
-
-#- CELL_WIDTH : SCREEN_WIDTH // int(FRAME_WIDTH / FRAME_DISCRETIZATION)
-#  - CELL_HEIGHT : SCREEN_HEIGHT // int(FRAME_HEIGHT / FRAME_DISCRETIZATION)
-
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray  # Replace with the appropriate message types for your topics
@@ -21,7 +17,7 @@ class PlantDataSubscriber(Node):
                 config = yaml.safe_load(file)
         constants = config['constants']
         
-        self.plant_velocity = float()
+        self.plant_velocity:float = float()
         self.plant_rotation = float()
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
@@ -45,7 +41,10 @@ class PlantDataSubscriber(Node):
 
     # Callback for the first topic
     def callback_plant_position_publisher(self, msg):
+        """
+        When a new message is received append it on 
         
+        """
         self.get_logger().info(f'Received from topic_1: {msg.data}')
 
     # Callback for the second topic
