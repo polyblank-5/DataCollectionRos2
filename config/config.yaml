@@ -7,4 +7,7 @@ constants:
   SCREEN_WIDTH : 500  # Pixel width of the window
   SCREEN_HEIGHT : 500  # Pixel height of the window
   FONT_SIZE : 16
+  TIMER_PERIOD :
+    VELOCITY_TIMEOUT : 0.5
+    POSITION_TIMEOUT : 0.5
 
