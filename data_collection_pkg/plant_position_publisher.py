@@ -17,7 +17,6 @@ class PlantPositionPublisher(Node):
         os.chdir('src/data_collection_pkg')
         #package_share_directory = os.path.join(    os.getenv('AMENT_PREFIX_PATH').split(':')[0], 'share/data_collection_pkg/config')
         config_file_path = os.path.join('config/', 'config.yaml')
-    
         with open(config_file_path, 'r') as file:
                 config = yaml.safe_load(file)
 
@@ -46,10 +45,10 @@ class PlantPositionPublisher(Node):
     def timer_callback(self):
         msg = String()
         if len(self.plant_positions) > 1:
-            for positions in self.plant_positions:
-                positions = self.update_position(positions[0],positions[1])
+            for i,positions in enumerate(self.plant_positions):
+                self.plant_positions[i] = self.update_position(positions[0],positions[1])
 
-            for i in range(len(self.plant_positions) - 1, -1, -1):
+            for i in range(len(self.plant_positions)):
                 if self.plant_positions[i][0] > self._FRAME_WIDTH or self.plant_positions[i][1] > self._FRAME_HEIGHT:
                     self.plant_positions.pop(i)
                 else:
@@ -60,7 +59,7 @@ class PlantPositionPublisher(Node):
             new_data = [0.0,y]
             self.plant_positions.append(new_data)
             #msg.data = self.plant_positions
-            
+
         msg.data = json.dumps(self.plant_positions)
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
