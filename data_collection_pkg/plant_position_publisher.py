@@ -60,8 +60,8 @@ class PlantPositionPublisher(Node):
             new_data = [0.0,y]
             self.plant_positions.append(new_data)
             #msg.data = self.plant_positions
-            msg.data = json.dumps(self.plant_positions)
-
+            
+        msg.data = json.dumps(self.plant_positions)
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
         self.i += 1

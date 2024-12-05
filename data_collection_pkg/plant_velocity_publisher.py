@@ -11,9 +11,9 @@ class PlantVelocityPublisher(Node):
     def __init__(self):
         super().__init__('plant_velocity_publisher')
         self.publisher_ = self.create_publisher(Float32MultiArray, 'plant_velocity_publisher', 10)
-        package_share_directory = os.path.join(
-            os.getenv('AMENT_PREFIX_PATH').split(':')[0], 'share/data_collection_pkg/config')
-        config_file_path = os.path.join(package_share_directory, 'config.yaml')
+        os.chdir('src/data_collection_pkg')
+        #package_share_directory = os.path.join(    os.getenv('AMENT_PREFIX_PATH').split(':')[0], 'share/data_collection_pkg/config')
+        config_file_path = os.path.join('config/', 'config.yaml')
     
         with open(config_file_path, 'r') as file:
                 config = yaml.safe_load(file)
