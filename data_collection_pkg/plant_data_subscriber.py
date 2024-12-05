@@ -8,7 +8,6 @@ from typing import List, Tuple
 import math
 from copy import deepcopy
 import json
-type Position = List[float]
 
 class PlantDataSubscriber(Node):
     def __init__(self):
@@ -25,7 +24,7 @@ class PlantDataSubscriber(Node):
         
         self.plant_velocity:float = 0.0
         self.plant_rotation:float = 0.0
-        self.plant_positions:List[Position] = []
+        self.plant_positions:List[List[float,float]] = []
 
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
