@@ -3,7 +3,7 @@ from rclpy.node import Node
 from std_msgs.msg import String  # Replace with the appropriate message types for your topics
 import json
 import pygame
-from typing import List
+from typing import List, Tuple
 import os 
 import yaml
 import threading
@@ -31,7 +31,7 @@ class PlantDataVisualizer(Node):
         self._FRAME_WIDTH = constants['FRAME_WIDTH']
         self._SCREEN_WIDTH = constants['SCREEN_WIDTH']
         self._SCREEN_HEIGHT = constants['SCREEN_HEIGHT']
-        self._FRAME_DISCRETIZATION = constants['_FRAME_DISCRETIZATION']
+        self._FRAME_DISCRETIZATION = constants['FRAME_DISCRETIZATION']
         self._CELL_WIDTH = self._SCREEN_WIDTH / (self._FRAME_WIDTH / self._FRAME_DISCRETIZATION)
         self._CELL_HEIGHT = self._SCREEN_HEIGHT / (self._FRAME_HEIGHT / self._FRAME_DISCRETIZATION)
         self._FONT_SIZE = constants['FONT_SIZE']
@@ -68,8 +68,8 @@ class PlantDataVisualizer(Node):
         # Initialize clock for Pygame
         self.clock = pygame.time.Clock()
 
-        self.plant_positions:List[List[float,float]] = []
-        self.plant_positions_calc:List[List[float,float]] = []
+        self.plant_positions:List[Tuple[float,float]] = []
+        self.plant_positions_calc:List[Tuple[float,float]] = []
 
 
     # Callback for the first topic

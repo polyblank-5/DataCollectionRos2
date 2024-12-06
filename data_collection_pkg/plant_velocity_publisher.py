@@ -28,7 +28,7 @@ class PlantVelocityPublisher(Node):
 
     def timer_callback(self):
         msg = Float32MultiArray()
-        msg.data = [self._SPEED, self._ROTATION_ANGLE]
+        msg.data = [self._SPEED + self._SPEED/10*random.choice([-1,1]), self._ROTATION_ANGLE]
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
         self.i += 1

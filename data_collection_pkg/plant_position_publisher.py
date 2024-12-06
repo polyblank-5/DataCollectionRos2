@@ -29,7 +29,7 @@ class PlantPositionPublisher(Node):
         timer_period = constants['TIMER_PERIOD']['POSITION_TIMEOUT']
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
-        self.plant_positions:List[List[float,float]] = []
+        self.plant_positions:List[Tuple[float,float]] = []
 
     def update_position(self,x:float,y:float) -> Tuple[float,float]:
         x = x + self._SPEED
@@ -56,7 +56,7 @@ class PlantPositionPublisher(Node):
 
         if random.choice([0, 1]) > 0.7:
             y = round(random.uniform(0, self._FRAME_HEIGHT), 1)
-            new_data = [0.0,y]
+            new_data = (0.0,y)
             self.plant_positions.append(new_data)
             #msg.data = self.plant_positions
 

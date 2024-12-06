@@ -24,7 +24,7 @@ class PlantDataSubscriber(Node):
         
         self.plant_velocity:float = 0.0
         self.plant_rotation:float = 0.0
-        self.plant_positions:List[List[float,float]] = []
+        self.plant_positions:List[List[float]] = []
 
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
@@ -51,13 +51,15 @@ class PlantDataSubscriber(Node):
     # Callback for the first topic
     def callback_plant_position_subscriber(self, msg):
         self.get_logger().info(f'Received from {self.plant_position_subscription.topic_name}: {msg.data}')
+        # New positions are being loaded 
         new_postions = json.loads(msg.data)
+        # IF the list is empty make them equal
         if self.plant_positions == []:
             self.plant_positions = new_postions
+        # If there are already plant positions existing 
         else:
             for i,positions in enumerate(self.plant_positions):
                 self.plant_positions[i][0], self.plant_positions[i][1] = self.update_position(positions[0], positions[1])
-            
             self.plant_positions = self.find_closest_points(self.plant_positions,new_postions)
         publisher_msg = String()
         publisher_msg.data = json.dumps(self.plant_positions)
@@ -76,12 +78,12 @@ class PlantDataSubscriber(Node):
         y += vertical_adjustment
         return (x,y)
     
-    def find_closest_points(self,plant_positions:list, new_plant_positions:list)-> list:
+    def find_closest_points(self,plant_positions:List[List[float]], new_plant_positions:List[List[float]])-> List[List[float]]:
 
         def euclidean_distance(p1, p2):
             """Calculate Euclidean distance between two points."""
             return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
+        
         for positions in plant_positions:
             if not new_plant_positions:
                 break  # Stop if list2 is empty
