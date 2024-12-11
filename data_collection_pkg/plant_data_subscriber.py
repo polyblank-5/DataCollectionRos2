@@ -57,7 +57,9 @@ class PlantDataSubscriber(Node):
         # New positions are being loaded 
         new_postions = json.loads(msg.data)
         # IF the list is empty make them equal
-        current_time:float = self.get_clock().now().nanoseconds / 10**-9
+        current_time:float = self.get_clock().now().nanoseconds / 1e9
+        if self.previous_time == 0.0:
+            self.previous_time = current_time
         t_d = current_time - self.previous_time
         if self.plant_positions == []:
             self.plant_positions = new_postions
