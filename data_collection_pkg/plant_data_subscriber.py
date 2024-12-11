@@ -26,6 +26,8 @@ class PlantDataSubscriber(Node):
         self.plant_rotation:float = 0.0
         self.plant_positions:List[List[float]] = []
 
+        self._FRAME_HEIGHT = constants['FRAME_HEIGHT']
+        self._FRAME_WIDTH = constants['FRAME_WIDTH']
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         
@@ -87,7 +89,8 @@ class PlantDataSubscriber(Node):
         for positions in plant_positions:
             if not new_plant_positions:
                 break  # Stop if list2 is empty
-
+            if positions[0] >= self._FRAME_WIDTH or positions[1] >= self._FRAME_HEIGHT:
+                continue
             # Find the closest point in list2 to point1
             closest_point = min(new_plant_positions, key=lambda p2: euclidean_distance(positions, p2))
             
@@ -97,6 +100,9 @@ class PlantDataSubscriber(Node):
             # Modify the value of the current point in list1 (e.g., set to [0.0, 0.0])
             positions[0] = positions[0]*1/3+closest_point[0]*2/3
             positions[1] = positions[1]*1/3+closest_point[1]*2/3
+        
+        for new_positions in new_plant_positions:
+            plant_positions.append(new_positions)
 
         return plant_positions
 
