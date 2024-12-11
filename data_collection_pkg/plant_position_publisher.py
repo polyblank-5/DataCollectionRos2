@@ -26,15 +26,15 @@ class PlantPositionPublisher(Node):
         self._FRAME_WIDTH = constants['FRAME_WIDTH']
         self._SPEED = float(constants['SPEED'])
         self._ROTATION_ANGLE = constants["ROTATION_ANGLE"]
-        timer_period = constants['TIMER_PERIOD']['POSITION_TIMEOUT']
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.timer_period = constants['TIMER_PERIOD']['POSITION_TIMEOUT']
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
         self.i = 0
         self.plant_positions:List[Tuple[float,float]] = []
 
     def update_position(self,x:float,y:float) -> Tuple[float,float]:
-        x = x + self._SPEED
+        x = x + self._SPEED * self.timer_period
         vertical_adjustment = self._SPEED * math.sin(math.radians(self._ROTATION_ANGLE))
-        y += vertical_adjustment
+        y += vertical_adjustment * self.timer_period
         return (x,y)
     """
     callback is being called 

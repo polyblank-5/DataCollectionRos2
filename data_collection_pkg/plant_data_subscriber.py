@@ -31,6 +31,7 @@ class PlantDataSubscriber(Node):
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         
+        self.previous_time:float = 0.0
         self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10)
         # Subscription to the first topic
         self.plant_position_subscription = self.create_subscription(
@@ -56,13 +57,16 @@ class PlantDataSubscriber(Node):
         # New positions are being loaded 
         new_postions = json.loads(msg.data)
         # IF the list is empty make them equal
+        current_time:float = self.get_clock().now().nanoseconds / 10**-9
+        t_d = current_time - self.previous_time
         if self.plant_positions == []:
             self.plant_positions = new_postions
         # If there are already plant positions existing 
         else:
             for i,positions in enumerate(self.plant_positions):
-                self.plant_positions[i][0], self.plant_positions[i][1] = self.update_position(positions[0], positions[1])
+                self.plant_positions[i][0], self.plant_positions[i][1] = self.update_position(positions[0], positions[1],t_d)
             self.plant_positions = self.find_closest_points(self.plant_positions,new_postions)
+        self.previous_time = current_time
         publisher_msg = String()
         publisher_msg.data = json.dumps(self.plant_positions)
         self.publisher_.publish(publisher_msg)
@@ -74,10 +78,10 @@ class PlantDataSubscriber(Node):
         self.plant_rotation = float(msg.data[1])
         self.get_logger().info(f'Received from {self.plant_velocity_subscription.topic_name}: {msg.data}')
 
-    def update_position(self,x:float,y:float) -> Tuple[float,float]:
-        x += self.plant_velocity
+    def update_position(self,x:float,y:float, t_d :float) -> Tuple[float,float]:
+        x += self.plant_velocity * t_d
         vertical_adjustment = self.plant_velocity * math.sin(math.radians(self.plant_rotation))
-        y += vertical_adjustment
+        y += vertical_adjustment * t_d
         return (x,y)
     
     def find_closest_points(self,plant_positions:List[List[float]], new_plant_positions:List[List[float]])-> List[List[float]]:
