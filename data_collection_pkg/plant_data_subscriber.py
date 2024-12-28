@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, String  # Replace with the appropriate message types for your topics
-import pygame
 import yaml
 import os
 from typing import List, Tuple
@@ -70,7 +69,7 @@ class PlantDataSubscriber(Node):
             self.plant_positions = self.find_closest_points(self.plant_positions,new_postions)
         self.previous_time = current_time
         publisher_msg = String()
-        publisher_msg.data = json.dumps(self.plant_positions)
+        publisher_msg.data = json.dumps(self.plant_positions) # TODO delete postions which are out of bounds
         self.publisher_.publish(publisher_msg)
         self.get_logger().info(f'Publishing Data to {self.publisher_.topic_name}: {publisher_msg.data}')
 
@@ -81,9 +80,9 @@ class PlantDataSubscriber(Node):
         self.get_logger().info(f'Received from {self.plant_velocity_subscription.topic_name}: {msg.data}')
 
     def update_position(self,x:float,y:float, t_d :float) -> Tuple[float,float]:
-        x += self.plant_velocity * t_d
+        y -= self.plant_velocity * t_d
         vertical_adjustment = self.plant_velocity * math.sin(math.radians(self.plant_rotation))
-        y += vertical_adjustment * t_d
+        x += vertical_adjustment * t_d
         return (x,y)
     
     def find_closest_points(self,plant_positions:List[List[float]], new_plant_positions:List[List[float]])-> List[List[float]]:

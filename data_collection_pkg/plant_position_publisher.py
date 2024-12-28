@@ -32,9 +32,9 @@ class PlantPositionPublisher(Node):
         self.plant_positions:List[Tuple[float,float]] = []
 
     def update_position(self,x:float,y:float) -> Tuple[float,float]:
-        x = x + self._SPEED * self.timer_period
+        y -=  self._SPEED * self.timer_period
         vertical_adjustment = self._SPEED * math.sin(math.radians(self._ROTATION_ANGLE))
-        y += vertical_adjustment * self.timer_period
+        x += vertical_adjustment * self.timer_period
         return (x,y)
     """
     callback is being called 
@@ -49,14 +49,14 @@ class PlantPositionPublisher(Node):
                 self.plant_positions[i] = self.update_position(positions[0],positions[1])
 
             for i in range(len(self.plant_positions)):
-                if self.plant_positions[i][0] > self._FRAME_WIDTH or self.plant_positions[i][1] > self._FRAME_HEIGHT:
+                if self.plant_positions[i][0] > self._FRAME_WIDTH or self.plant_positions[i][1] > self._FRAME_HEIGHT: # TODO change to borders of detection box
                     self.plant_positions.pop(i)
                 else:
                     break
 
         if random.choice([0, 1]) > 0.7:
-            y = round(random.uniform(0, self._FRAME_HEIGHT), 1)
-            new_data = (0.0,y)
+            x = round(random.uniform(-self._FRAME_WIDTH/2, self._FRAME_WIDTH/2), 1)
+            new_data = (self._FRAME_WIDTH/2+x,0+self._FRAME_HEIGHT-100) #TODO Change number to parameter
             self.plant_positions.append(new_data)
             #msg.data = self.plant_positions
 
