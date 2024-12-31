@@ -8,6 +8,12 @@ import math
 from copy import deepcopy
 import json
 
+class RobotArea():
+    def __init__(self,width:float, height:float, y:float):
+        self.width: float = float(width)
+        self.height: float = float(height)
+        self.Y:float = float(y)
+
 class PlantDataSubscriber(Node):
     def __init__(self):
         super().__init__('plant_data_subscriber')
@@ -29,9 +35,12 @@ class PlantDataSubscriber(Node):
         self._FRAME_WIDTH = constants['FRAME_WIDTH']
         self._CELL_WIDTH = constants['SCREEN_WIDTH'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
         self._CELL_HEIGHT = constants['SCREEN_HEIGHT'] // int(constants['FRAME_WIDTH'] / constants['FRAME_DISCRETIZATION'])
+
+        self._DETECTION_AREA:RobotArea = RobotArea(constants['DETECTION_AREA']['WIDTH'],constants['DETECTION_AREA']['HEIGHT'],constants['DETECTION_AREA']['Y'])
+        self._LASER_AREA:RobotArea = RobotArea(constants['LASER_AREA']['WIDTH'],constants['LASER_AREA']['HEIGHT'],constants['LASER_AREA']['Y'])
         
         self.previous_time:float = 0.0
-        self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10)
+        self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10) # TODO increase publish frequency to 1000Hz maybe safe values and do a timer 
         # Subscription to the first topic
         self.plant_position_subscription = self.create_subscription(
             String,             # Replace 'String' with your topic's message type
@@ -66,7 +75,7 @@ class PlantDataSubscriber(Node):
         else:
             for i,positions in enumerate(self.plant_positions):
                 self.plant_positions[i][0], self.plant_positions[i][1] = self.update_position(positions[0], positions[1],t_d)
-            self.plant_positions = self.find_closest_points(self.plant_positions,new_postions)
+            self.plant_positions = self.find_closest_points(self.plant_positions,new_postions) # TODO only do that when the point is in the border of the detection box
         self.previous_time = current_time
         publisher_msg = String()
         publisher_msg.data = json.dumps(self.plant_positions) # TODO delete postions which are out of bounds
@@ -94,8 +103,12 @@ class PlantDataSubscriber(Node):
         for positions in plant_positions:
             if not new_plant_positions:
                 break  # Stop if list2 is empty
-            if positions[0] >= self._FRAME_WIDTH or positions[1] >= self._FRAME_HEIGHT:
+            if positions[1] <= self._DETECTION_AREA.Y:
+                if positions
                 continue
+            elif positions[0] >= self._FRAME_WIDTH or positions[1] <= 0:
+                continue
+            
             # Find the closest point in list2 to point1
             closest_point = min(new_plant_positions, key=lambda p2: euclidean_distance(positions, p2))
             

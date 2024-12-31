@@ -7,6 +7,7 @@ import yaml
 import math
 from typing import List,Tuple
 import json
+from plant_data_subscriber import RobotArea
 
 
 class PlantPositionPublisher(Node):
@@ -27,6 +28,10 @@ class PlantPositionPublisher(Node):
         self._SPEED = float(constants['SPEED'])
         self._ROTATION_ANGLE = constants["ROTATION_ANGLE"]
         self.timer_period = constants['TIMER_PERIOD']['POSITION_TIMEOUT']
+
+        self._DETECTION_AREA:RobotArea = RobotArea(constants['DETECTION_AREA']['WIDTH'],constants['DETECTION_AREA']['HEIGHT'],constants['DETECTION_AREA']['Y'])
+        self._LASER_AREA:RobotArea = RobotArea(constants['LASER_AREA']['WIDTH'],constants['LASER_AREA']['HEIGHT'],constants['LASER_AREA']['Y'])
+        
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
         self.i = 0
         self.plant_positions:List[Tuple[float,float]] = []
@@ -49,7 +54,7 @@ class PlantPositionPublisher(Node):
                 self.plant_positions[i] = self.update_position(positions[0],positions[1])
 
             for i in range(len(self.plant_positions)):
-                if self.plant_positions[i][0] > self._FRAME_WIDTH or self.plant_positions[i][1] > self._FRAME_HEIGHT: # TODO change to borders of detection box
+                if (self.plant_positions[i][0] > self._FRAME_WIDTH/2) or self.plant_positions[i][1] > self._FRAME_HEIGHT: # TODO change to borders of detection box
                     self.plant_positions.pop(i)
                 else:
                     break
