@@ -54,14 +54,15 @@ class PlantPositionPublisher(Node):
                 self.plant_positions[i] = self.update_position(positions[0],positions[1])
 
             for i in range(len(self.plant_positions)):
-                if (self.plant_positions[i][0] > self._FRAME_WIDTH/2) or self.plant_positions[i][1] > self._FRAME_HEIGHT: # TODO change to borders of detection box
+                if ((self.plant_positions[i][0] > self._FRAME_WIDTH/2 +self._DETECTION_AREA.width/2 and self.plant_positions[i][0] <self._FRAME_WIDTH/2 - self._DETECTION_AREA.width/2) or
+                    ( self.plant_positions[i][1] < self._DETECTION_AREA.Y)): # TODO change to borders of detection box
                     self.plant_positions.pop(i)
                 else:
                     break
 
         if random.choice([0, 1]) > 0.7:
-            x = round(random.uniform(-self._FRAME_WIDTH/2, self._FRAME_WIDTH/2), 1)
-            new_data = (self._FRAME_WIDTH/2+x,0+self._FRAME_HEIGHT-100) #TODO Change number to parameter
+            x = round(random.uniform(-self._DETECTION_AREA.width/2, self._DETECTION_AREA.width/2), 1)
+            new_data = (self._FRAME_WIDTH/2+x,0+self._FRAME_HEIGHT-self._DETECTION_AREA.width/2) #TODO Change number to parameter
             self.plant_positions.append(new_data)
             #msg.data = self.plant_positions
 
