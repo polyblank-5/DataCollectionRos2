@@ -39,6 +39,8 @@ class PlantDataSubscriber(Node):
         self._DETECTION_AREA:RobotArea = RobotArea(constants['DETECTION_AREA']['WIDTH'],constants['DETECTION_AREA']['HEIGHT'],constants['DETECTION_AREA']['Y'])
         self._LASER_AREA:RobotArea = RobotArea(constants['LASER_AREA']['WIDTH'],constants['LASER_AREA']['HEIGHT'],constants['LASER_AREA']['Y'])
         
+        self.laser_positions:List[List[float]] = []
+
         self.previous_time:float = 0.0
         self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10) # TODO increase publish frequency to 1000Hz maybe safe values and do a timer 
         # Subscription to the first topic
@@ -100,11 +102,16 @@ class PlantDataSubscriber(Node):
             """Calculate Euclidean distance between two points."""
             return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
         
-        for positions in plant_positions:
+        for i,positions in enumerate(plant_positions):
             if not new_plant_positions:
                 break  # Stop if list2 is empty
             if positions[1] <= self._DETECTION_AREA.Y:
-                if positions
+                if ((positions[1] <= self._LASER_AREA.Y and positions[1] >= self._LASER_AREA.Y-self._LASER_AREA.height) and
+                    (positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2)):
+                    # Point inside of Laser Area
+                    self.laser_positions.append(positions)
+                    # if position gets appended to new list delete it from the old one 
+                    plant_positions.pop(i)
                 continue
             elif positions[0] >= self._FRAME_WIDTH or positions[1] <= 0:
                 continue
