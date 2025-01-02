@@ -43,6 +43,7 @@ class PlantDataSubscriber(Node):
 
         self.previous_time:float = 0.0
         self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10) # TODO increase publish frequency to 1000Hz maybe safe values and do a timer 
+        self.publisher_laser_position = self.create_publisher(Float32MultiArray, 'plant_data_publisher', 10)
         # Subscription to the first topic
         self.plant_position_subscription = self.create_subscription(
             String,             # Replace 'String' with your topic's message type
@@ -60,6 +61,11 @@ class PlantDataSubscriber(Node):
             10                  # QoS depth
         )
         self.plant_velocity_subscription  # Prevent unused variable warning
+        
+        self.laser_update_timer = self.create_timer(1/20, self.laser_update_timer_callback)
+        self.laser_publisher_timer = self.create_timer(1/1000,self.laser_publisher_timer_callback)
+
+
 
     # Callback for the first topic
     def callback_plant_position_subscriber(self, msg):
@@ -130,6 +136,21 @@ class PlantDataSubscriber(Node):
             plant_positions.append(new_positions)
 
         return plant_positions
+    
+    # update laser positions that are inside of the laser area 
+    def laser_update_timer_callback(self):
+        for i,positions in enumerate(self.laser_positions[1:], start=1):
+            self.laser_positions[i][0], self.laser_positions[i][1] = self.update_position(positions[0], positions[1],1/20)
+            if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
+                positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height)):
+                self.laser_positions.pop(i)
+    
+    def laser_publisher_timer_callback(self):
+        msg = Float32MultiArray()
+        self.laser_positions[0][0], self.laser_positions[0][1] = self.update_position(self.laser_positions[0][0], self.laser_positions[0][1],1/1000)
+        msg.data = self.laser_positions[0]
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg.data)
 
 def main(args=None):
     rclpy.init(args=args)
