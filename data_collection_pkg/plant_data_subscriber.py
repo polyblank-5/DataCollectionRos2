@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray, String  # Replace with the appropriate message types for your topics
+from std_msgs.msg import Float32MultiArray, String, Bool  # Replace with the appropriate message types for your topics
 import yaml
 import os
 from typing import List, Tuple
@@ -29,7 +29,9 @@ class PlantDataSubscriber(Node):
         
         self.plant_velocity:float = 0.0
         self.plant_rotation:float = 0.0
+        self.laser_id:int = 0
         self.plant_positions:List[List[float]] = []
+        self.laser_activation:bool = False
 
         self._FRAME_HEIGHT = constants['FRAME_HEIGHT']
         self._FRAME_WIDTH = constants['FRAME_WIDTH']
@@ -43,7 +45,7 @@ class PlantDataSubscriber(Node):
 
         self.previous_time:float = 0.0
         self.publisher_ = self.create_publisher(String, 'plant_data_publisher', 10) # TODO increase publish frequency to 1000Hz maybe safe values and do a timer 
-        self.publisher_laser_position = self.create_publisher(Float32MultiArray, 'plant_data_publisher', 10)
+        self.publisher_laser_position = self.create_publisher(Float32MultiArray, 'plant_laser_data_publisher', 10)
         # Subscription to the first topic
         self.plant_position_subscription = self.create_subscription(
             String,             # Replace 'String' with your topic's message type
@@ -61,9 +63,17 @@ class PlantDataSubscriber(Node):
             10                  # QoS depth
         )
         self.plant_velocity_subscription  # Prevent unused variable warning
+
+        self.laser_activity_subscription = self.create_subscription(
+            Bool,             # Replace 'String' with your topic's message type
+            'laser_activation',          # Replace 'topic_1' with the name of your first topic
+            self.callback_laser_activity_subscriber,    # Callback for the first topic
+            10                  # QoS depth
+        )
+        self.plant_position_subscription  # Prevent unused variable warning
         
-        self.laser_update_timer = self.create_timer(1/20, self.laser_update_timer_callback)
-        self.laser_publisher_timer = self.create_timer(1/1000,self.laser_publisher_timer_callback)
+        self.laser_update_timer = None
+        self.laser_publisher_timer = None
 
 
 
@@ -112,8 +122,12 @@ class PlantDataSubscriber(Node):
             if not new_plant_positions:
                 break  # Stop if list2 is empty
             if positions[1] <= self._DETECTION_AREA.Y:
-                if ((positions[1] <= self._LASER_AREA.Y and positions[1] >= self._LASER_AREA.Y-self._LASER_AREA.height) and
-                    (positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2)):
+                if ((positions[1] >= self._LASER_AREA.Y and positions[1] <= (self._LASER_AREA.Y+self._LASER_AREA.height)) and
+                    (positions[0] > (self._FRAME_WIDTH/2 -self._LASER_AREA.width/2) and positions[0] <(self._FRAME_WIDTH/2 + self._LASER_AREA.width/2))):
+                    print("data in field ")
+                    if self.laser_update_timer == None:
+                        self.laser_update_timer = self.create_timer(1/20, self.laser_update_timer_callback)
+                        self.laser_publisher_timer = self.create_timer(1/1000,self.laser_publisher_timer_callback)
                     # Point inside of Laser Area
                     self.laser_positions.append(positions)
                     # if position gets appended to new list delete it from the old one 
@@ -139,18 +153,30 @@ class PlantDataSubscriber(Node):
     
     # update laser positions that are inside of the laser area 
     def laser_update_timer_callback(self):
-        for i,positions in enumerate(self.laser_positions[1:], start=1):
-            self.laser_positions[i][0], self.laser_positions[i][1] = self.update_position(positions[0], positions[1],1/20)
-            if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
-                positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height)):
-                self.laser_positions.pop(i)
+        try:
+            for i,positions in enumerate(self.laser_positions[1:], start=1):
+                self.laser_positions[i][0], self.laser_positions[i][1] = self.update_position(positions[0], positions[1],1/20)
+                if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
+                    positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height)):
+                    self.laser_positions.pop(i)
+        except:
+            pass
     
     def laser_publisher_timer_callback(self):
-        msg = Float32MultiArray()
-        self.laser_positions[0][0], self.laser_positions[0][1] = self.update_position(self.laser_positions[0][0], self.laser_positions[0][1],1/1000)
-        msg.data = self.laser_positions[0]
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        try:
+            msg = Float32MultiArray()
+            self.laser_positions[0][0], self.laser_positions[0][1] = self.update_position(self.laser_positions[0][0], self.laser_positions[0][1],1/1000)
+            msg.data = [self.laser_positions[0][0],self.laser_positions[0][1],self.laser_id]
+            self.publisher_laser_position.publish(msg)
+            #self.get_logger().info('Publishing: "%s"' % msg.data)
+        except:
+            pass
+        
+    def callback_laser_activity_subscriber(self,msg:Bool):
+        if self.laser_activation == True and msg.data == False:
+            self.laser_positions.pop(0)
+            self.laser_id +=1
+        self.laser_activation = msg.data
 
 def main(args=None):
     rclpy.init(args=args)
