@@ -157,7 +157,7 @@ class PlantDataSubscriber(Node):
             for i,positions in enumerate(self.laser_positions[1:], start=1):
                 self.laser_positions[i][0], self.laser_positions[i][1] = self.update_position(positions[0], positions[1],1/20)
                 if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
-                    positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height)):
+                    positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height/2)):
                     self.laser_positions.pop(i)
         except:
             pass
