@@ -101,7 +101,7 @@ class PlantDataSubscriber(Node):
         self.get_logger().info(f'Publishing Data to {self.publisher_.topic_name}: {publisher_msg.data}')
 
     # Callback for the second topic
-    def callback_plant_velocity_subscriber(self, msg):
+    def callback_plant_velocity_subscriber(self, msg:Float32MultiArray):
         self.plant_velocity = float(msg.data[0])
         self.plant_rotation = float(msg.data[1])
         self.get_logger().info(f'Received from {self.plant_velocity_subscription.topic_name}: {msg.data}')
@@ -156,12 +156,11 @@ class PlantDataSubscriber(Node):
         try:
             for i,positions in enumerate(self.laser_positions[1:], start=1):
                 self.laser_positions[i][0], self.laser_positions[i][1] = self.update_position(positions[0], positions[1],1/20)
-                if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 and positions[0] <self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
-                    positions[1]<(self._LASER_AREA.Y-self._LASER_AREA.height/2)):
+                if ((positions[0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2 or positions[0] < self._FRAME_WIDTH/2 - self._LASER_AREA.width/2) or
+                    positions[1]<(self._LASER_AREA.Y+self._LASER_AREA.height/2)):
                     self.laser_positions.pop(i)
         except:
             pass
-    
     def laser_publisher_timer_callback(self):
         try:
             msg = Float32MultiArray()
@@ -169,6 +168,10 @@ class PlantDataSubscriber(Node):
             msg.data = [self.laser_positions[0][0],self.laser_positions[0][1],self.laser_id]
             self.publisher_laser_position.publish(msg)
             #self.get_logger().info('Publishing: "%s"' % msg.data)
+            if self.laser_positions[0][1] < (self._LASER_AREA.Y) or ((self.laser_positions[0][0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2) or (self.laser_positions[0][0] < self._FRAME_WIDTH/2 - self._LASER_AREA.width/2)):
+                self.laser_positions.pop(0)
+                self.laser_id +=1
+                self.laser_activation = False
         except:
             pass
         
