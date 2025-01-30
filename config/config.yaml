@@ -2,14 +2,14 @@ constants:
   FRAME_WIDTH : 220.0  # Frame size in simulation units
   FRAME_HEIGHT : 700.0
   FRAME_DISCRETIZATION : 2  # Step size
-  SPEED : 0.2  # Weed movement speed
-  ROTATION_ANGLE : 10  # Rotation in degrees
+  SPEED : 20  # Weed movement speed
+  ROTATION_ANGLE : 0  # Rotation in degrees
   SCREEN_WIDTH :  1024 # Pixel width of the window
   SCREEN_HEIGHT : 768  # Pixel height of the window
   FONT_SIZE : 16
   TIMER_PERIOD :
     VELOCITY_TIMEOUT : 1.05
-    POSITION_TIMEOUT : 1.05
+    POSITION_TIMEOUT : 0.5
   DETECTION_AREA :
     WIDTH : 200
     HEIGHT : 150

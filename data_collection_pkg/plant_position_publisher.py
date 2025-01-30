@@ -65,7 +65,7 @@ class PlantPositionPublisher(Node):
                 except:
                     print("exception pop")
 
-        if random.choice([0, 1]) > 0.3:
+        if random.choice([0, 1]) > 0.1:
             x = round(random.uniform(-self._DETECTION_AREA.width/2, self._DETECTION_AREA.width/2), 1)
             new_data = (self._FRAME_WIDTH/2+x,0+self._DETECTION_AREA.Y+self._DETECTION_AREA.height)
             self.plant_positions.append(new_data)

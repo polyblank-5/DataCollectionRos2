@@ -74,12 +74,13 @@ class PlantDataSubscriber(Node):
         
         self.laser_update_timer = None
         self.laser_publisher_timer = None
+        self.timer_isrunning = False
 
 
 
     # Callback for the first topic
     def callback_plant_position_subscriber(self, msg):
-        self.get_logger().info(f'Received from {self.plant_position_subscription.topic_name}: {msg.data}')
+        #self.get_logger().info(f'Received from {self.plant_position_subscription.topic_name}: {msg.data}')
         # New positions are being loaded 
         new_postions = json.loads(msg.data)
         # IF the list is empty make them equal
@@ -98,13 +99,13 @@ class PlantDataSubscriber(Node):
         publisher_msg = String()
         publisher_msg.data = json.dumps(self.plant_positions) # TODO delete postions which are out of bounds
         self.publisher_.publish(publisher_msg)
-        self.get_logger().info(f'Publishing Data to {self.publisher_.topic_name}: {publisher_msg.data}')
+        #self.get_logger().info(f'Publishing Data to {self.publisher_.topic_name}: {publisher_msg.data}')
 
     # Callback for the second topic
     def callback_plant_velocity_subscriber(self, msg:Float32MultiArray):
         self.plant_velocity = float(msg.data[0])
         self.plant_rotation = float(msg.data[1])
-        self.get_logger().info(f'Received from {self.plant_velocity_subscription.topic_name}: {msg.data}')
+        #self.get_logger().info(f'Received from {self.plant_velocity_subscription.topic_name}: {msg.data}')
 
     def update_position(self,x:float,y:float, t_d :float) -> Tuple[float,float]:
         y -= self.plant_velocity * t_d
@@ -124,10 +125,16 @@ class PlantDataSubscriber(Node):
             if positions[1] <= self._DETECTION_AREA.Y:
                 if ((positions[1] >= self._LASER_AREA.Y and positions[1] <= (self._LASER_AREA.Y+self._LASER_AREA.height)) and
                     (positions[0] > (self._FRAME_WIDTH/2 -self._LASER_AREA.width/2) and positions[0] <(self._FRAME_WIDTH/2 + self._LASER_AREA.width/2))):
-                    print("data in field ")
-                    if self.laser_update_timer == None:
+                    self.get_logger().info(f"New data in Laser field {self.plant_position_subscription.topic_name}")
+                    if self.laser_update_timer == None and self.timer_isrunning == False:
                         self.laser_update_timer = self.create_timer(1/20, self.laser_update_timer_callback)
                         self.laser_publisher_timer = self.create_timer(1/1000,self.laser_publisher_timer_callback)
+                        self.timer_isrunning = True
+                    elif self.timer_isrunning == False:
+                        self.timer_isrunning = True
+                        self.laser_update_timer.reset()
+                        self.laser_publisher_timer.reset()
+                        self.get_logger().info(f'Timer restarted {self.plant_position_subscription.topic_name}')
                     # Point inside of Laser Area
                     self.laser_positions.append(positions)
                     # if position gets appended to new list delete it from the old one 
@@ -169,16 +176,31 @@ class PlantDataSubscriber(Node):
             self.publisher_laser_position.publish(msg)
             #self.get_logger().info('Publishing: "%s"' % msg.data)
             if self.laser_positions[0][1] < (self._LASER_AREA.Y) or ((self.laser_positions[0][0] > self._FRAME_WIDTH/2 +self._LASER_AREA.width/2) or (self.laser_positions[0][0] < self._FRAME_WIDTH/2 - self._LASER_AREA.width/2)):
+                self.get_logger().warn(f"Weed has been deleted - out of field {len(self.laser_positions)}")
                 self.laser_positions.pop(0)
                 self.laser_id +=1
                 self.laser_activation = False
+                if len(self.laser_positions) == 0:
+                    self.get_logger().info("Timer stopped")
+                    self.laser_update_timer.cancel()
+                    self.laser_publisher_timer.cancel()
+                    self.timer_isrunning = False
         except:
-            pass
+            self.get_logger().error(f"Weed could not be deleted form list - out of field ; Laser Activation:{self.laser_activation}")
         
     def callback_laser_activity_subscriber(self,msg:Bool):
-        if self.laser_activation == True and msg.data == False:
-            self.laser_positions.pop(0)
-            self.laser_id +=1
+        try:
+            if self.laser_activation == True and msg.data == False and self.timer_isrunning:
+                self.get_logger().warn(f"Weed has been deleted from list - Lasering finished {len(self.laser_positions)}")
+                self.laser_positions.pop(0)
+                self.laser_id +=1
+                if len(self.laser_positions) == 0:
+                    self.get_logger().info("Timer stopped")
+                    self.laser_update_timer.cancel()
+                    self.laser_publisher_timer.cancel()
+                    self.timer_isrunning = False
+        except:
+            self.get_logger().error(f"Weed could not be deleted form list {self.laser_activity_subscription.topic_name}")
         self.laser_activation = msg.data
 
 def main(args=None):
